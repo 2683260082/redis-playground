@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}HASH 哈希 · Redis 游乐场{% endblock %}
+
+{% block content %}
+<div class="concept">
+  <span class="tag">HASH</span>
+  一个键里面装<b>多组字段-值</b>，就像一个档案袋或 JSON 对象。
+  适合存「对象的某几个属性」：比如只改用户昵称时，用
+  <code>HSET user name 新名</code> 不会动到其他字段——比把整个对象
+  序列化成字符串再覆盖省得多。
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <span>HGETALL · 档案内容</span>
+    <span class="head-extra">
+      <form method="get" style="display:inline">
+        <input type="text" name="key" value="{{ key }}" style="width:150px;display:inline-block"
+               aria-label="键名">
+        <button class="btn btn-sm" type="submit">切换键</button>
+      </form>
+      <span style="margin-left:8px">FIELDS = <b style="color:var(--cyan)">{{ data | length }}</b></span>
+    </span>
+  </div>
+  <div class="panel-body">
+    <div class="meta-line">KEY = <b>{{ key }}</b> · TYPE = <b>{{ ktype }}</b>
+      {% if ktype != 'hash' and ktype != 'none' %}
+        · ⚠ 不是 hash 类型
+      {% endif %}
+    </div>
+    {% if data %}
+      <div class="table-wrap" style="margin-top:10px">
+        <table class="data">
+          <thead><tr><th>FIELD</th><th>VALUE</th><th></th></tr></thead>
+          <tbody>
+            {% for field, value in data.items() %}
+              <tr>
+                <td>{{ field }}</td>
+                <td>{{ value }}</td>
+                <td style="text-align:right">
+                  <form method="post" action="{{ url_for('views.hash_del') }}">
+                    <input type="hidden" name="key" value="{{ key }}">
+                    <input type="hidden" name="field" value="{{ field }}">
+                    <button class="btn btn-sm" type="submit">HDEL</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">档案袋是空的。在下面写入第一个字段 →</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><span>HSET · 写入字段</span></div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('views.hash_set') }}" class="form-grid">
+      <div class="form-row two">
+        <div class="form-row">
+          <label for="h-key">KEY</label>
+          <input type="text" id="h-key" name="key" value="{{ key }}">
+        </div>
+        <div class="form-row">
+          <label for="h-field">FIELD</label>
+          <input type="text" id="h-field" name="field" placeholder="name" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <label for="h-val">VALUE</label>
+        <input type="text" id="h-val" name="value" placeholder="张三" required>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-red" type="submit">HSET 写入</button>
+      </div>
+      <p class="meta-line" style="margin:0">
+        试试连续写入同一 field 两次——返回值是 0，因为是覆盖而不是新增。
+      </p>
+    </form>
+  </div>
+</section>
+{% endblock %}

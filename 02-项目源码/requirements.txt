@@ -1,0 +1,6 @@
+﻿# 依赖清单: Flask Web 框架 + redis 客户端 + fakeredis 内存模拟器
+# 安装: pip install -r requirements.txt
+# 说明: 未安装真实 Redis 时自动使用 fakeredis, API 与真实 Redis 完全一致
+Flask>=3.0,<4.0
+redis>=5.0
+fakeredis>=2.20

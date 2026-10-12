@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}总览 · Redis 游乐场{% endblock %}
+
+{% block content %}
+<div class="cards">
+  <div class="card">
+    <div class="label">Server Mode</div>
+    <div class="value {{ 'green' if redis_mode == '真实' else 'amber' }}">{{ info.mode }}模式</div>
+  </div>
+  <div class="card">
+    <div class="label">Version</div>
+    <div class="value cyan">{{ info.version }}</div>
+  </div>
+  <div class="card">
+    <div class="label">Keys in DB0</div>
+    <div class="value">{{ info.dbsize }}</div>
+  </div>
+  <div class="card">
+    <div class="label">Used Memory</div>
+    <div class="value">{{ info.used_memory_human }}</div>
+  </div>
+  <div class="card">
+    <div class="label">Clients</div>
+    <div class="value">{{ info.connected_clients }}</div>
+  </div>
+</div>
+
+<div class="concept">
+  <span class="tag">概念</span>
+  Redis 是一个把数据放在<b>内存</b>里的键值数据库，读写通常在微秒级。
+  下方的键浏览器用 <code>SCAN</code> 命令以游标方式遍历（生产环境安全，
+  不会像 <code>KEYS *</code> 那样阻塞服务）。点击任意键可跳到对应实验室继续玩。
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <span>Key Browser · 键浏览器</span>
+    <span class="head-extra">
+      <form method="post" action="{{ url_for('views.flush') }}" style="display:inline"
+            onsubmit="return confirm('确定执行 FLUSHDB 清空 0 号库全部键？')">
+        <button class="btn btn-sm" type="submit">FLUSHDB 清空</button>
+      </form>
+      <a class="btn btn-sm" href="{{ url_for('views.index') }}">重新扫描</a>
+    </span>
+  </div>
+  {% if keys %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr><th>Key</th><th>Type</th><th>TTL</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for key, ktype, ttl in keys %}
+            <tr>
+              <td>{{ key }}</td>
+              <td><span class="type-chip type-{{ ktype }}">{{ ktype }}</span></td>
+              <td>
+                {% if ttl == -1 %}<span class="ttl-infinity">∞ 永不过期</span>
+                {% elif ttl == -2 %}<span class="ttl-infinity">-</span>
+                {% else %}<span class="ttl-count">{{ ttl }} s</span>{% endif %}
+              </td>
+              <td>
+                {% if ktype == 'string' %}<a href="{{ url_for('views.string_page', key=key) }}">打开 →</a>
+                {% elif ktype == 'list' %}<a href="{{ url_for('views.list_page', key=key) }}">打开 →</a>
+                {% elif ktype == 'hash' %}<a href="{{ url_for('views.hash_page', key=key) }}">打开 →</a>
+                {% elif ktype == 'set' %}<a href="{{ url_for('views.set_page', key=key) }}">打开 →</a>
+                {% elif ktype == 'zset' %}<a href="{{ url_for('views.zset_page', key=key) }}">打开 →</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">库里还没有任何键。去上面的实验室（字符串 / 列表 / …）创建第一个键吧 →</p>
+  {% endif %}
+</section>
+{% endblock %}

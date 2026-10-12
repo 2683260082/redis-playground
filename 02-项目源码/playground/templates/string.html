@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}STRING 字符串 · Redis 游乐场{% endblock %}
+
+{% block content %}
+<div class="concept">
+  <span class="tag">STRING</span>
+  最基础的类型：<b>一个键对应一个值</b>，就像一张便利贴。
+  典型用途：缓存对象 JSON、计数器（<code>INCR</code> 原子自增）、
+  配置项。配合 <code>EXPIRE</code> 可以做「N 秒后自动失效」——
+  下面的倒计时就是 <code>TTL</code> 命令的实时读数。
+</div>
+
+{% if view %}
+<section class="panel">
+  <div class="panel-head">
+    <span>Inspect · 查看键</span>
+    <span class="head-extra"><code>{{ view.key }}</code></span>
+  </div>
+  <div class="panel-body">
+    <div class="meta-line">
+      TYPE = <b>{{ view.type }}</b>
+      {% if view.type != 'string' and view.type != 'none' %}
+        · ⚠ 不是 string 类型，GET 不适用（试试上方其他实验室）
+      {% endif %}
+    </div>
+
+    {% if view.type == 'string' %}
+      <div class="value-view">{{ view.value }}</div>
+      <div class="ttl-box">
+        <div>
+          <div class="ttl-label">TTL · 剩余存活时间</div>
+          <div class="ttl-num" id="ttl-num">
+            {%- if view.ttl == -1 %}∞{% elif view.ttl < 0 %}—{% else %}{{ view.ttl }}s{% endif -%}
+          </div>
+        </div>
+        <div class="meta-line">
+          {% if view.ttl == -1 %}永不过期（没有设置 EXPIRE）
+          {% elif view.ttl < 0 %}键不存在
+          {% else %}倒计时到 0 时，Redis 会自动删除这个键
+          {% endif %}
+        </div>
+      </div>
+      <div class="ttl-bar" aria-hidden="true"><i id="ttl-bar" style="width:{% if view.ttl > 0 %}100{% else %}0{% endif %}%"></i></div>
+
+      <div class="btn-row" style="margin-top:16px">
+        <form method="post" action="{{ url_for('views.string_expire') }}">
+          <input type="hidden" name="key" value="{{ view.key }}">
+          <input type="hidden" name="ttl" value="60">
+          <button class="btn" type="submit">EXPIRE 60s</button>
+        </form>
+        <form method="post" action="{{ url_for('views.string_persist') }}">
+          <input type="hidden" name="key" value="{{ view.key }}">
+          <button class="btn" type="submit">PERSIST 取消过期</button>
+        </form>
+        <form method="post" action="{{ url_for('views.string_del') }}"
+              onsubmit="return confirm('删除该键？')">
+          <input type="hidden" name="key" value="{{ view.key }}">
+          <button class="btn" type="submit">DEL 删除</button>
+        </form>
+      </div>
+    {% elif view.type == 'none' %}
+      <p class="empty">键不存在（可能 TTL 到期被自动删除了——这正是过期机制在工作）</p>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+<section class="panel">
+  <div class="panel-head"><span>SET · 写入 (可选过期秒数)</span></div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('views.string_set') }}" class="form-grid">
+      <div class="form-row two">
+        <div class="form-row">
+          <label for="s-key">KEY</label>
+          <input type="text" id="s-key" name="key" placeholder="greeting" required
+                 value="{{ view.key if view else '' }}">
+        </div>
+        <div class="form-row">
+          <label for="s-ttl">TTL 秒 (0 = 永不过期)</label>
+          <input type="number" id="s-ttl" name="ttl" value="0" min="0" max="86400">
+        </div>
+      </div>
+      <div class="form-row">
+        <label for="s-val">VALUE</label>
+        <input type="text" id="s-val" name="value" placeholder="你好, Redis" required>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-red" type="submit">SET 写入</button>
+        <button class="btn" type="submit" formaction="{{ url_for('views.string_get') }}">GET 查询</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><span>INCR · 原子计数器</span></div>
+  <div class="panel-body">
+    <p class="meta-line" style="margin-top:0">
+      网站 PV、库存扣减、限流窗口都靠它。键不存在时 INCR 会从 0 开始。
+    </p>
+    <form method="post" action="{{ url_for('views.string_incr') }}" class="form-row two">
+      <div class="form-row">
+        <label for="i-key">KEY</label>
+        <input type="text" id="i-key" name="key" value="visit:count">
+      </div>
+      <div class="btn-row" style="align-self:end">
+        <button class="btn btn-red" type="submit">INCR +1</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{% if view and view.type == 'string' and view.ttl > 0 %}
+<script>
+(function () {
+  var key = {{ view.key | tojson }};
+  var initial = {{ view.ttl }};
+  var num = document.getElementById("ttl-num");
+  var bar = document.getElementById("ttl-bar");
+  if (!num) return;
+  setInterval(function () {
+    fetch("/api/ttl?key=" + encodeURIComponent(key))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.exists || data.ttl < 0) {
+          num.textContent = data.ttl === -1 ? "∞" : "—";
+          if (bar) bar.style.width = "0%";
+          return;
+        }
+        if (data.ttl > initial) initial = data.ttl;
+        num.textContent = data.ttl + "s";
+        if (bar) bar.style.width = Math.max(0, (data.ttl / initial) * 100) + "%";
+      })
+      .catch(function () {});
+  }, 1000);
+})();
+</script>
+{% endif %}
+{% endblock %}

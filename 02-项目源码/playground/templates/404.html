@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}404 · Redis 游乐场{% endblock %}
+
+{% block content %}
+<section class="err-page">
+  <p class="code">404</p>
+  <p>GET 一个不存在的路由 → (nil)</p>
+  <p><a class="btn" href="{{ url_for('views.index') }}">返回总览</a></p>
+</section>
+{% endblock %}

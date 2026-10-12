@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}ZSET 有序集合 · Redis 游乐场{% endblock %}
+
+{% block content %}
+<div class="concept">
+  <span class="tag">ZSET</span>
+  集合的每个成员都带一个<b>分数 score</b>，Redis 永远按分数排好序——
+  这就是排行榜、延时队列、范围推荐的底层结构。
+  <code>ZADD</code> 更新分数、<code>ZRANGE</code> 按名次取段。
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <span>Leaderboard · 排行榜 Top 20</span>
+    <span class="head-extra">
+      <form method="get" style="display:inline">
+        <input type="text" name="key" value="{{ key }}" style="width:170px;display:inline-block"
+               aria-label="键名">
+        <button class="btn btn-sm" type="submit">切换键</button>
+      </form>
+      <form method="post" action="{{ url_for('views.zset_seed') }}" style="display:inline;margin-left:6px">
+        <input type="hidden" name="key" value="{{ key }}">
+        <button class="btn btn-sm" type="submit">写入演示数据</button>
+      </form>
+    </span>
+  </div>
+  <div class="panel-body">
+    <div class="meta-line">KEY = <b>{{ key }}</b> · TYPE = <b>{{ ktype }}</b>
+      {% if ktype != 'zset' and ktype != 'none' %} · ⚠ 不是 zset 类型{% endif %}
+    </div>
+    {% if rows %}
+      <div style="margin-top:8px">
+        {% for member, score in rows %}
+          <div class="rank">
+            <span class="no">#{{ loop.index }}</span>
+            <div class="who">
+              <div class="name">{{ member }}</div>
+              <div class="bar" aria-hidden="true"><i style="width:{{ (score / max_score * 100) | round(1) }}%"></i></div>
+            </div>
+            <div>
+              <span class="score">{{ score | round(1) }}</span>
+              <form method="post" action="{{ url_for('views.zset_del') }}" class="del" style="display:inline">
+                <input type="hidden" name="key" value="{{ key }}">
+                <input type="hidden" name="member" value="{{ member }}">
+                <button class="btn btn-sm" type="submit">ZREM</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty">排行榜是空的——点右上角「写入演示数据」一键生成，或在下面手动加人。</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><span>ZADD · 添加/更新成员分数</span></div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('views.zset_add') }}" class="form-row three">
+      <div class="form-row">
+        <label for="z-m">成员</label>
+        <input type="text" id="z-m" name="member" placeholder="新选手" required>
+      </div>
+      <div class="form-row">
+        <label for="z-s">分数</label>
+        <input type="number" id="z-s" name="score" step="any" placeholder="8000" required>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-red" type="submit">ZADD 写入</button>
+      </div>
+    </form>
+    <p class="meta-line" style="margin-bottom:0">
+      对已存在的成员再 ZADD：分数被覆盖，名次实时重排——给第一名改个低分试试。
+    </p>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}SET 集合 · Redis 游乐场{% endblock %}
+
+{% block content %}
+<div class="concept">
+  <span class="tag">SET</span>
+  <b>无序、自动去重</b>的元素集合。用 <code>SADD</code> 重复添加同一个元素，
+  返回值是 0（没有新增）。集合之间还能做<b>交并差</b>：
+  比如两个用户的标签集合 <code>SINTER</code> 一下，就是「共同标签」。
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <span>SMEMBERS · 集合成员</span>
+    <span class="head-extra">
+      <form method="get" style="display:inline">
+        <input type="text" name="key" value="{{ key }}" style="width:140px;display:inline-block"
+               aria-label="键名">
+        {% if key2 %}<input type="hidden" name="key2" value="{{ key2 }}">{% endif %}
+        <button class="btn btn-sm" type="submit">切换键</button>
+      </form>
+      <span style="margin-left:8px">CARD = <b style="color:var(--cyan)">{{ members | length }}</b></span>
+    </span>
+  </div>
+  <div class="panel-body">
+    <div class="meta-line">KEY = <b>{{ key }}</b> · TYPE = <b>{{ ktype }}</b>
+      {% if ktype != 'set' and ktype != 'none' %} · ⚠ 不是 set 类型{% endif %}
+    </div>
+    {% if members %}
+      <div class="chips">
+        {% for m in members %}
+          <span class="chip">{{ m }}
+            <form method="post" action="{{ url_for('views.set_del') }}">
+              <input type="hidden" name="key" value="{{ key }}">
+              <input type="hidden" name="member" value="{{ m }}">
+              <button class="x" type="submit" aria-label="移除 {{ m }}">×</button>
+            </form>
+          </span>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty">集合是空的。在下面添加元素（逗号分隔可批量）→</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><span>SADD · 添加元素</span></div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('views.set_add') }}" class="form-row three">
+      <div class="form-row">
+        <label for="m-val">元素 (逗号分隔批量)</label>
+        <input type="text" id="m-val" name="members" placeholder="Redis, Flask, Python" required>
+      </div>
+      <div class="form-row">
+        <label for="m-key">KEY</label>
+        <input type="text" id="m-key" name="key" value="{{ key }}">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-red" type="submit">SADD 添加</button>
+      </div>
+    </form>
+    <p class="meta-line" style="margin-bottom:0">
+      把同一个元素再加一遍试试：命令回显会告诉你新增了 0 个。
+    </p>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><span>SINTER · 交集实验 (共同好友/标签)</span></div>
+  <div class="panel-body">
+    <form method="get" class="form-row three">
+      <div class="form-row">
+        <label for="k1">集合 A</label>
+        <input type="text" id="k1" name="key" value="{{ key }}">
+      </div>
+      <div class="form-row">
+        <label for="k2">集合 B</label>
+        <input type="text" id="k2" name="key2" value="{{ key2 or 'demo:tags-b' }}"
+               placeholder="demo:tags-b">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-red" type="submit">SINTER 求交集</button>
+      </div>
+    </form>
+    {% if inter is not none %}
+      <div class="meta-line" style="margin-top:14px">
+        SINTER {{ key }} {{ key2 }} →
+        {% if inter %}
+          <span class="chips" style="display:inline-flex;vertical-align:middle">
+            {% for m in inter %}<span class="chip inter">{{ m }}</span>{% endfor %}
+          </span>
+        {% else %}
+          (空集, 两个集合没有共同元素)
+        {% endif %}
+      </div>
+    {% endif %}
+    <p class="meta-line" style="margin-bottom:0">
+      先给两个键各加点元素（在上面 SADD 表单里切换 KEY），再点求交集。
+    </p>
+  </div>
+</section>
+{% endblock %}

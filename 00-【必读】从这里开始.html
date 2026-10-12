@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>必读 · 从这里开始 —— Redis 游乐场</title>
+<style>
+/* 与「Redis 游乐场」一致的暗色监控台配色 */
+:root {
+  --bg: #0e1319;
+  --bg-2: #0a0e13;
+  --panel: #141b24;
+  --panel-2: #182131;
+  --line: #26334a;
+  --ink: #e8edf5;
+  --muted: #93a1b5;
+  --red: #dc382d;
+  --red-bright: #ff6b57;
+  --green: #3fb950;
+  --amber: #e3b341;
+  --cyan: #58c4dc;
+  --violet: #c792ea;
+  --mono: "Cascadia Mono", Consolas, "Courier New", monospace;
+  --sans: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0 20px 60px;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(rgba(88,196,220,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(88,196,220,.035) 1px, transparent 1px);
+  background-size: 36px 36px;
+  color: var(--ink); font-family: var(--sans); line-height: 1.75;
+}
+.wrap { max-width: 960px; margin: 0 auto; }
+
+.hero {
+  margin: 0 -20px 28px; padding: 40px 24px;
+  background: linear-gradient(135deg, #1a1013, #141b24 55%, #101820);
+  border-bottom: 3px solid var(--red);
+  text-align: center;
+}
+.hero h1 {
+  margin: 0 0 8px; font-family: var(--mono);
+  font-size: 30px; letter-spacing: 0.12em; color: var(--ink);
+}
+.hero h1 .r { color: var(--red-bright); }
+.hero p { margin: 0; color: var(--muted); font-size: 15px; }
+.hero .badge-row { margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.badge {
+  font-family: var(--mono); font-size: 12.5px;
+  padding: 4px 13px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--muted);
+}
+.badge.red { color: var(--red-bright); border-color: rgba(255,107,87,.5); }
+.badge.green { color: var(--green); border-color: rgba(63,185,80,.5); }
+
+section {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 22px 26px; margin-bottom: 18px;
+}
+h2 {
+  font-family: var(--mono); font-size: 17px; margin: 0 0 4px;
+  display: flex; align-items: center; gap: 10px; letter-spacing: .04em;
+}
+h2 .num {
+  background: var(--red); color: #fff;
+  width: 26px; height: 26px; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; flex: 0 0 auto;
+}
+.sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+h3 { font-size: 15px; margin: 20px 0 8px; color: var(--ink); }
+
+.tip {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-left: 3px solid var(--cyan);
+  border-radius: 6px; padding: 12px 16px; font-size: 14px;
+  color: var(--muted); margin: 14px 0;
+}
+.warn {
+  background: #211a10; border: 1px solid #4a3b1c;
+  border-left: 3px solid var(--amber);
+  border-radius: 6px; padding: 12px 16px; font-size: 14px;
+  color: var(--muted); margin: 14px 0;
+}
+.tip b, .warn b { color: var(--ink); }
+
+code {
+  font-family: var(--mono); font-size: .9em;
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 4px; padding: 1px 7px;
+}
+pre {
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px;
+  padding: 14px 18px; overflow-x: auto;
+  font-family: var(--mono); font-size: 13.5px; line-height: 1.7;
+  color: var(--ink);
+}
+pre code { background: none; border: 0; padding: 0; }
+
+/* 步骤 */
+.steps { counter-reset: step; display: grid; gap: 13px; }
+.step {
+  display: flex; gap: 15px; align-items: flex-start;
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 15px 17px;
+}
+.step::before {
+  counter-increment: step; content: counter(step);
+  background: var(--red); color: #fff;
+  width: 29px; height: 29px; border-radius: 50%; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px;
+}
+.step .body { flex: 1; }
+.step .body b { display: block; margin-bottom: 3px; font-size: 15px; }
+.step .body span { color: var(--muted); font-size: 14px; }
+
+.file-btn {
+  display: inline-block; background: var(--red); color: #fff;
+  padding: 3px 12px; border-radius: 6px; font-weight: 600; font-size: 14px;
+}
+
+/* 表格 */
+table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0; }
+th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+th {
+  background: var(--bg-2); font-family: var(--mono); font-size: 12px;
+  letter-spacing: .1em; color: var(--muted); white-space: nowrap;
+}
+td .name { font-family: var(--mono); font-weight: 600; }
+td .kind {
+  display: inline-block; font-size: 12px; padding: 1px 8px;
+  border-radius: 999px; border: 1px solid var(--line);
+  color: var(--muted); background: var(--bg-2); white-space: nowrap;
+}
+td .kind.code { color: var(--red-bright); border-color: rgba(255,107,87,.45); }
+tr.sub-row td { background: rgba(10,14,19,.55); }
+tr.sub-row td:first-child { padding-left: 26px; }
+
+/* 数据结构类型色 */
+.t { font-family: var(--mono); font-size: 12.5px; padding: 1px 9px; border-radius: 999px; border: 1px solid; }
+.t-string { color: var(--cyan); border-color: rgba(88,196,220,.5); }
+.t-list { color: var(--amber); border-color: rgba(227,179,65,.5); }
+.t-hash { color: var(--green); border-color: rgba(63,185,80,.5); }
+.t-set { color: var(--red-bright); border-color: rgba(255,107,87,.5); }
+.t-zset { color: var(--violet); border-color: rgba(199,146,234,.5); }
+
+/* 学习路线 */
+.route { display: grid; gap: 10px; }
+.route-item {
+  display: grid; grid-template-columns: 34px 1fr; gap: 13px;
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 12px 15px;
+}
+.route-item .no {
+  font-family: var(--mono); color: var(--red-bright); font-weight: 700;
+  font-size: 16px; text-align: center;
+}
+.route-item b { font-size: 14.5px; }
+.route-item span { display: block; color: var(--muted); font-size: 13.5px; }
+
+.faq { border-top: 1px dashed var(--line); padding: 11px 0; }
+.faq:first-of-type { border-top: 0; }
+.faq b { display: block; margin-bottom: 3px; font-size: 14.5px; }
+.faq span { color: var(--muted); font-size: 14px; }
+
+.foot { text-align: center; color: var(--muted); font-size: 13px; padding-top: 6px; font-family: var(--mono); }
+.foot a { color: var(--red-bright); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1><span class="r">R</span>EDIS 游乐场</h1>
+    <p>交互式 Redis 学习实验室 —— 点按钮、看命令、懂原理</p>
+    <div class="badge-row">
+      <span class="badge red">Flask 手工实现</span>
+      <span class="badge">七大学习页</span>
+      <span class="badge green">12 项测试通过</span>
+      <span class="badge">真实 / 模拟 双模式</span>
+    </div>
+  </div>
+
+  <!-- 1 这是什么 -->
+  <section>
+    <h2><span class="num">1</span>这是什么？</h2>
+    <p class="sub">一个带网页界面的 Redis 实验室：每按一个按钮，页面顶部就会回显这次操作对应的<b>真实 Redis 命令和返回值</b>。</p>
+    <div class="tip">
+      <b>怎么学：</b>每个页面顶部有「概念」讲解块（类型用途 + 直觉类比），
+      中间是可视化操作区，每次操作的命令回显在页面顶部——
+      把「界面动作」和「命令行」一一对应起来，就是最直观的 Redis 入门。
+    </div>
+    <table>
+      <tr><th>页面</th><th>对应类型</th><th>你会练到</th></tr>
+      <tr><td><span class="name">总览 OVERVIEW</span></td><td>—</td><td>SCAN 游标遍历、键/类型/TTL 一览、FLUSHDB 清库</td></tr>
+      <tr><td><span class="name">STRING 字符串</span></td><td><span class="t t-string">string</span></td><td>SET/GET、EXPIRE 倒计时动画、INCR 原子计数器</td></tr>
+      <tr><td><span class="name">LIST 列表</span></td><td><span class="t t-list">list</span></td><td>双端进出队列、FIFO 直觉（消息队列原型）</td></tr>
+      <tr><td><span class="name">HASH 哈希</span></td><td><span class="t t-hash">hash</span></td><td>对象字段级读写（HSET/HGETALL/HDEL）</td></tr>
+      <tr><td><span class="name">SET 集合</span></td><td><span class="t t-set">set</span></td><td>自动去重、SADD 返回值含义、SINTER 求共同标签</td></tr>
+      <tr><td><span class="name">ZSET 有序集合</span></td><td><span class="t t-zset">zset</span></td><td>分数排行榜（ZADD / 按名次取段 / ZREM）</td></tr>
+      <tr><td><span class="name">CACHE 缓存</span></td><td>模式</td><td>get-or-set、HIT/MISS 计数、0.8s 慢查询对比实测</td></tr>
+    </table>
+  </section>
+
+  <!-- 2 概念速查 -->
+  <section>
+    <h2><span class="num">2</span>Redis 核心概念速查</h2>
+    <p class="sub">Redis = 把数据放在<b>内存</b>里的键值数据库，读写微秒级。六大结构一张表：</p>
+    <table>
+      <tr><th>类型</th><th>直觉类比</th><th>关键命令</th><th>典型场景</th></tr>
+      <tr>
+        <td><span class="t t-string">string</span></td>
+        <td>一张便利贴 / 一个计数器</td>
+        <td><code>SET</code> <code>GET</code> <code>INCR</code> <code>EXPIRE</code></td>
+        <td>缓存 JSON、页面 PV 计数、验证码</td>
+      </tr>
+      <tr>
+        <td><span class="t t-list">list</span></td>
+        <td>两端能进出的传送带</td>
+        <td><code>LPUSH</code> <code>RPOP</code> <code>LRANGE</code></td>
+        <td>消息队列、任务排队、最新 N 条</td>
+      </tr>
+      <tr>
+        <td><span class="t t-hash">hash</span></td>
+        <td>一个档案袋（字段-值）</td>
+        <td><code>HSET</code> <code>HGETALL</code> <code>HDEL</code></td>
+        <td>用户资料、对象的部分字段更新</td>
+      </tr>
+      <tr>
+        <td><span class="t t-set">set</span></td>
+        <td>不重复的名单（无序）</td>
+        <td><code>SADD</code> <code>SMEMBERS</code> <code>SINTER</code></td>
+        <td>标签、去重、共同好友（交集）</td>
+      </tr>
+      <tr>
+        <td><span class="t t-zset">zset</span></td>
+        <td>带分数的排行榜</td>
+        <td><code>ZADD</code> <code>ZRANGE</code> <code>ZREM</code></td>
+        <td>排行榜、延时队列、范围推荐</td>
+      </tr>
+      <tr>
+        <td>过期 TTL</td>
+        <td>定时销毁的便签</td>
+        <td><code>EXPIRE</code> <code>TTL</code> <code>PERSIST</code></td>
+        <td>缓存自动失效、限流窗口</td>
+      </tr>
+    </table>
+    <div class="tip">
+      <b>两个必须懂的数字：</b>在 STRING 页看 <code>TTL</code> 倒计时归零键自动消失；
+      在 SET 页重复 <code>SADD</code> 同一元素返回 <b>0</b>（没新增）——
+      这两个细节是面试和实战的高频点。
+    </div>
+  </section>
+
+  <!-- 3 怎么运行 -->
+  <section>
+    <h2><span class="num">3</span>怎么运行？（三步）</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="body">
+          <b>双击 <span class="file-btn">01-【双击开始】.bat</span></b>
+          <span>自动检查 Python 和依赖，缺什么装什么，并探测本机 Redis 服务。</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="body">
+          <b>浏览器自动打开 http://127.0.0.1:5000</b>
+          <span>顶部徽章显示当前模式：绿色「真实模式」= 连上了 Redis 服务；琥珀色「模拟模式」= 使用内存模拟器。</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="body">
+          <b>按第 4 节的学习路线逐页玩</b>
+          <span>每页先读「概念」块，再动手；观察页面顶部的命令回显。</span>
+        </div>
+      </div>
+    </div>
+    <div class="warn">
+      <b>双模式说明：</b>没装 Redis 也能完整学习——自动降级为
+      <code>fakeredis</code> 内存模拟器，<b>命令与 API 和真实 Redis 完全一致</b>。
+      想要真实模式，任选：<code>winget install Memurai.MemuraiDeveloper</code>
+      （Windows 服务，本项目开发即用它），或 <code>docker run -d -p 6379:6379 redis:7</code>。
+      装好重启本项目即可。
+    </div>
+  </section>
+
+  <!-- 4 学习路线 -->
+  <section>
+    <h2><span class="num">4</span>推荐学习路线</h2>
+    <p class="sub">按顺序玩一遍（约 30 分钟），Redis 的骨架就建立起来了。</p>
+    <div class="route">
+      <div class="route-item"><div class="no">1</div><div><b>总览页认识全局</b><span>看顶部状态卡片（版本/内存/键数），用键浏览器点开任意键。</span></div></div>
+      <div class="route-item"><div class="no">2</div><div><b>STRING：写入 + TTL 倒计时</b><span>SET 一个键并设 TTL 60，盯着大数字倒计时到 0，键自动消失。</span></div></div>
+      <div class="route-item"><div class="no">3</div><div><b>STRING：INCR 计数器</b><span>连点 INCR 观察原子自增——这就是网站 PV 的实现方式。</span></div></div>
+      <div class="route-item"><div class="no">4</div><div><b>LIST：体验 FIFO</b><span>RPUSH 推入几个任务，LPOP 从另一头弹出——先进先出。</span></div></div>
+      <div class="route-item"><div class="no">5</div><div><b>HASH：更新对象字段</b><span>给 demo:user 写 name/age/email，理解「只改一个字段」的含义。</span></div></div>
+      <div class="route-item"><div class="no">6</div><div><b>SET：去重 + 交集</b><span>重复 SADD 看返回 0；建两个集合并 SINTER 求共同标签。</span></div></div>
+      <div class="route-item"><div class="no">7</div><div><b>ZSET：一键生成排行榜</b><span>点「写入演示数据」看分数排序；给第一名改低分观察实时重排。</span></div></div>
+      <div class="route-item"><div class="no">8</div><div><b>CACHE：缓存的价值</b><span>连点两次「带缓存」（第二次毫秒级 HIT），再「绕过」看 800ms——对比即理解。</span></div></div>
+      <div class="route-item"><div class="no">9</div><div><b>回总览 FLUSHDB 收尾</b><span>清空所有键，键浏览器归零，复习一遍 SCAN 和 DBSIZE。</span></div></div>
+    </div>
+  </section>
+
+  <!-- 5 目录导读 -->
+  <section>
+    <h2><span class="num">5</span>目录结构导读</h2>
+    <table>
+      <tr><th>名称</th><th>类型</th><th>作用</th></tr>
+      <tr>
+        <td><span class="name">00-【必读】从这里开始.html</span></td>
+        <td><span class="kind">说明页</span></td>
+        <td>★ 本页：概念速查、运行方法、学习路线、常见问题。</td>
+      </tr>
+      <tr>
+        <td><span class="name">01-【双击开始】.bat</span></td>
+        <td><span class="kind">启动脚本</span></td>
+        <td>★ 一键启动：检查环境 → 装依赖 → 探测 Redis → 启动 → 开浏览器。</td>
+      </tr>
+      <tr>
+        <td><span class="name">README.md</span></td>
+        <td><span class="kind">文档</span></td>
+        <td>技术向说明（GitHub 仓库首页展示的内容）。</td>
+      </tr>
+      <tr>
+        <td><span class="name">02-项目源码/</span></td>
+        <td><span class="kind code">源码目录</span></td>
+        <td>★ 所有代码、测试都在这里。</td>
+      </tr>
+      <tr class="sub-row"><td><span class="name">app.py</span></td><td><span class="kind code">代码</span></td><td>程序入口：双击 01 后实际执行的就是它。</td></tr>
+      <tr class="sub-row"><td><span class="name">playground/redis_client.py</span></td><td><span class="kind code">代码</span></td><td>客户端层：真实 Redis 优先，连不上自动降级 fakeredis（想看「双模式」怎么实现就读它）。</td></tr>
+      <tr class="sub-row"><td><span class="name">playground/views.py</span></td><td><span class="kind code">代码</span></td><td>七个页面的路由；每个操作的命令回显逻辑在这里。</td></tr>
+      <tr class="sub-row"><td><span class="name">playground/templates/ static/</span></td><td><span class="kind code">模板/样式</span></td><td>页面结构与暗色监控台样式。</td></tr>
+      <tr class="sub-row"><td><span class="name">tests/</span></td><td><span class="kind">测试</span></td><td>★ 12 个自动化测试（强制模拟模式，不依赖本机服务）。</td></tr>
+      <tr class="sub-row"><td><span class="name">requirements.txt</span></td><td><span class="kind">配置</span></td><td>依赖清单：Flask + redis + fakeredis。</td></tr>
+      <tr>
+        <td><span class="name">.git/ .gitignore .venv/</span></td>
+        <td><span class="kind">环境</span></td>
+        <td>版本管理与虚拟环境，验收可忽略。</td>
+      </tr>
+    </table>
+    <div class="tip">
+      <b>记忆要点：</b>看说明翻 <b>00</b>，要运行点 <b>01</b>，
+      看代码进 <b>02-项目源码/playground/</b>，跑测试在 <b>02-项目源码/</b> 里。
+    </div>
+  </section>
+
+  <!-- 6 测试 -->
+  <section>
+    <h2><span class="num">6</span>如何验证质量？</h2>
+    <p class="sub">进入 <b>02-项目源码</b> 文件夹打开命令行（地址栏输入 cmd 回车），执行：</p>
+<pre><code>python -m unittest discover -s tests -t . -v</code></pre>
+    <div class="tip">
+      <b>预期结果：</b>结尾显示 <b>Ran 12 tests</b> 和 <b>OK</b>。
+      覆盖：七页渲染、SET/GET 往返、INCR 累加、TTL 接口、队列 FIFO、
+      集合去重与交集、排行榜降序、缓存 MISS→HIT、清库、404。
+    </div>
+  </section>
+
+  <!-- 7 FAQ -->
+  <section>
+    <h2><span class="num">7</span>常见问题</h2>
+    <div class="faq">
+      <b>Q：顶部显示「模拟模式」，是假的 Redis 吗？</b>
+      <span>fakeredis 是纯 Python 实现的内存版 Redis，命令、返回值、
+      行为和真实 Redis 一致，学习完全够用。装好真实 Redis 后重启即切换。</span>
+    </div>
+    <div class="faq">
+      <b>Q：模拟模式的数据重启后去哪了？</b>
+      <span>存在进程内存里，重启即清空（学习场景正合适，永远从干净状态开始）。
+      真实模式的数据按 Redis 自身的持久化配置落盘。</span>
+    </div>
+    <div class="faq">
+      <b>Q：双击后提示没有 Python？</b>
+      <span>到 python.org/downloads 安装 3.9+，务必勾选 “Add Python to PATH”，重双击 01。</span>
+    </div>
+    <div class="faq">
+      <b>Q：依赖安装失败？</b>
+      <span>在 02-项目源码 内执行：<code>pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple</code></span>
+    </div>
+    <div class="faq">
+      <b>Q：端口 5000 打不开？</b>
+      <span>看是否已有黑框窗口在运行（避免重复启动）；或等 3 秒 F5 刷新；
+      仍不行则全关后重双击 01。</span>
+    </div>
+  </section>
+
+  <!-- 8 验收清单 -->
+  <section>
+    <h2><span class="num">8</span>验收清单</h2>
+    <table>
+      <tr><th>验收项</th><th>在哪里</th></tr>
+      <tr><td>双击即可运行</td><td><span class="file-btn">01-【双击开始】.bat</span></td></tr>
+      <tr><td>图文说明与概念速查</td><td><span class="file-btn">00-【必读】从这里开始.html</span>（本页）</td></tr>
+      <tr><td>核心源码</td><td><span class="name">02-项目源码/playground/</span>（客户端层 + 七页路由）</td></tr>
+      <tr><td>自动化测试</td><td><span class="name">02-项目源码/tests/</span>（12 项，命令见第 6 节）</td></tr>
+      <tr><td>双模式设计</td><td>顶部徽章 + <span class="name">redis_client.py</span></td></tr>
+      <tr><td>在线源码仓库</td><td><a href="https://github.com/2683260082/redis-playground">github.com/2683260082/redis-playground</a></td></tr>
+    </table>
+  </section>
+
+  <p class="foot">
+    REDIS 游乐场 —— Flask 手工实现 · 点按钮 · 看命令 · 懂原理<br>
+    技术细节见 README.md
+  </p>
+
+</div>
+</body>
+</html>

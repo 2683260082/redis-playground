@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Redis 游乐场{% endblock %}</title>
+  <meta name="description" content="交互式 Redis 学习实验室：六大数据结构 + TTL + 缓存，操作实时回显真实命令">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23DC382D'/%3E%3Ctext x='16' y='23' font-size='19' font-weight='bold' fill='%23fff' text-anchor='middle' font-family='Consolas,monospace'%3ER%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="logo" href="{{ url_for('views.index') }}">
+        <span class="logo-mark" aria-hidden="true">R</span>
+        Redis 游乐场
+        <span class="logo-sub">PLAYGROUND</span>
+      </a>
+      <span class="mode mode-{{ redis_mode }}">
+        <span class="dot" aria-hidden="true"></span>
+        {{ redis_mode }}模式
+      </span>
+    </div>
+    <nav class="tabs" aria-label="实验室导航">
+      <a href="{{ url_for('views.index') }}"{{ ' class="active"' if request.endpoint == 'views.index' else '' }}>OVERVIEW<span class="zh">总览</span></a>
+      <a href="{{ url_for('views.string_page') }}"{{ ' class="active"' if request.endpoint == 'views.string_page' else '' }}>STRING<span class="zh">字符串</span></a>
+      <a href="{{ url_for('views.list_page') }}"{{ ' class="active"' if request.endpoint == 'views.list_page' else '' }}>LIST<span class="zh">列表</span></a>
+      <a href="{{ url_for('views.hash_page') }}"{{ ' class="active"' if request.endpoint == 'views.hash_page' else '' }}>HASH<span class="zh">哈希</span></a>
+      <a href="{{ url_for('views.set_page') }}"{{ ' class="active"' if request.endpoint == 'views.set_page' else '' }}>SET<span class="zh">集合</span></a>
+      <a href="{{ url_for('views.zset_page') }}"{{ ' class="active"' if request.endpoint == 'views.zset_page' else '' }}>ZSET<span class="zh">有序集合</span></a>
+      <a href="{{ url_for('views.cache_page') }}"{{ ' class="active"' if request.endpoint == 'views.cache_page' else '' }}>CACHE<span class="zh">缓存</span></a>
+    </nav>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container flashes" role="status">
+        {% for category, message in messages %}
+          {% if category == 'cmd' %}
+            <div class="flash cmd"><span class="prompt" aria-hidden="true">redis&gt;</span>{{ message }}</div>
+          {% else %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    © {{ now_year }} Redis 游乐场 · 当前 {{ redis_mode }}模式 · 命令与 API 和真实 Redis 完全一致
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

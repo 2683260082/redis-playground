@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}CACHE 缓存 · Redis 游乐场{% endblock %}
+
+{% block content %}
+<div class="concept">
+  <span class="tag">CACHE</span>
+  Redis 最广的用途：<b>缓存热点数据</b>，挡住慢查询。
+  流程是「先查 Redis → 命中直接返回；未命中才算，算完写回 Redis 并设置 TTL」。
+  下面的慢查询固定耗时 0.8 秒——对比两次执行的耗时，缓存的价值一目了然。
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="label">HIT · 命中</div>
+    <div class="value green">{{ hits }}</div>
+  </div>
+  <div class="card">
+    <div class="label">MISS · 未命中</div>
+    <div class="value red">{{ misses }}</div>
+  </div>
+  <div class="card">
+    <div class="label">命中率</div>
+    <div class="value amber">{{ rate }}</div>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><span>Cache-or-Compute · 缓存实验</span></div>
+  <div class="panel-body">
+    {% if cached %}
+      <div class="meta-line">当前缓存值 (TTL 剩余 {{ remaining if remaining >= 0 else '∞' }} 秒):</div>
+      <div class="cached-val">{{ cached }}</div>
+    {% else %}
+      <div class="meta-line">缓存为空——第一次执行必然 MISS，这很正常。</div>
+    {% endif %}
+
+    <div class="btn-row" style="margin-top:18px">
+      <form method="post" action="{{ url_for('views.cache_run') }}">
+        <input type="hidden" name="mode" value="cached">
+        <button class="btn btn-red" type="submit">带缓存执行 (get-or-set)</button>
+      </form>
+      <form method="post" action="{{ url_for('views.cache_run') }}">
+        <input type="hidden" name="mode" value="bypass">
+        <button class="btn" type="submit">绕过缓存直接算</button>
+      </form>
+      <form method="post" action="{{ url_for('views.cache_reset') }}"
+            onsubmit="return confirm('清空缓存键并把 HIT/MISS 计数归零？')">
+        <button class="btn" type="submit">重置实验</button>
+      </form>
+    </div>
+
+    <p class="meta-line" style="margin-bottom:0">
+      操作要领：先连点两次「带缓存」（第二次是 HIT，毫秒级），
+      再点「绕过缓存」（每次都 800ms）——命令回显里有每次的真实耗时。
+    </p>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><span>原理 · 这套动作对应的真实代码</span></div>
+  <div class="panel-body">
+<pre><code>def get_or_set(key, ttl, compute):
+    value = redis.get(key)          # 1. 先查缓存
+    if value is not None:
+        return value                # 2. 命中: 直接返回 (~0.1ms)
+    value = compute()               # 3. 未命中: 执行慢查询 (800ms)
+    redis.set(key, value, ex=ttl)   # 4. 写回 + 设置过期时间
+    return value</code></pre>
+    <p class="meta-line" style="margin-bottom:0">
+      命中率是缓存系统的核心指标；TTL 防止数据永远不过期，
+      也让「数据变旧」有明确的时间边界。
+    </p>
+  </div>
+</section>
+{% endblock %}

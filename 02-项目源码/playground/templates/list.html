@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}LIST 列表 · Redis 游乐场{% endblock %}
+
+{% block content %}
+<div class="concept">
+  <span class="tag">LIST</span>
+  一个键存一串<b>有序、可重复</b>的元素，两端都能进出——
+  就像一条传送带：<code>LPUSH</code> 从左进、<code>RPOP</code> 从右出，
+  就是一个先进先出的队列（消息队列、任务排队的经典实现）。
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <span>Queue · 队列可视化</span>
+    <span class="head-extra">
+      <form method="get" style="display:inline">
+        <input type="text" name="key" value="{{ key }}" style="width:150px;display:inline-block"
+               aria-label="键名">
+        <button class="btn btn-sm" type="submit">切换键</button>
+      </form>
+      <span style="margin-left:8px">LEN = <b style="color:var(--cyan)">{{ length }}</b></span>
+    </span>
+  </div>
+  <div class="panel-body">
+    <div class="meta-line">KEY = <b>{{ key }}</b> · TYPE = <b>{{ ktype }}</b>
+      {% if ktype != 'list' and ktype != 'none' %}
+        · ⚠ 不是 list 类型，先 FLUSHDB 清库或换一个键
+      {% endif %}
+    </div>
+    {% if items %}
+      <div class="queue-ends"><span>← HEAD (LPUSH 进 / LPOP 出)</span><span>(RPOP 出 / RPUSH 进) TAIL →</span></div>
+      <div class="queue">
+        {% for item in items %}
+          <span class="queue-item" data-idx="{{ loop.index0 }}">{{ item }}</span>
+        {% endfor %}
+        {% if length > 30 %}<span class="queue-item">…共 {{ length }} 个</span>{% endif %}
+      </div>
+    {% else %}
+      <p class="empty">队列是空的。往下面的表单里推入第一个元素 →</p>
+    {% endif %}
+
+    <div class="btn-row" style="margin-top:18px">
+      <form method="post" action="{{ url_for('views.list_pop') }}">
+        <input type="hidden" name="key" value="{{ key }}">
+        <input type="hidden" name="side" value="left">
+        <button class="btn" type="submit">LPOP 左出</button>
+      </form>
+      <form method="post" action="{{ url_for('views.list_pop') }}">
+        <input type="hidden" name="key" value="{{ key }}">
+        <input type="hidden" name="side" value="right">
+        <button class="btn" type="submit">RPOP 右出</button>
+      </form>
+      <form method="post" action="{{ url_for('views.list_del') }}"
+            onsubmit="return confirm('删除整个列表？')">
+        <input type="hidden" name="key" value="{{ key }}">
+        <button class="btn" type="submit">DEL 清空</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><span>PUSH · 入队</span></div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('views.list_push') }}" class="form-row three">
+      <div class="form-row">
+        <label for="p-val">元素</label>
+        <input type="text" id="p-val" name="value" placeholder="任务-001" required>
+      </div>
+      <div class="form-row">
+        <label for="p-key">KEY</label>
+        <input type="text" id="p-key" name="key" value="{{ key }}">
+      </div>
+      <div class="btn-row">
+        <button class="btn" type="submit" name="side" value="left">LPUSH 左进</button>
+        <button class="btn btn-red" type="submit" name="side" value="right">RPUSH 右进</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
