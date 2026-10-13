@@ -21,17 +21,20 @@ redis-playground/
 ├── 00-【必读】从这里开始.html    # 图文说明: Redis 概念速查 + 学习路线 + 目录导读
 ├── 01-【双击开始】.bat           # 一键启动 (自动装依赖、探测 Redis、开浏览器)
 ├── README.md                     # 本说明文档
-└── 02-项目源码/                  # 全部源码
-    ├── app.py                    # 启动入口: python app.py
-    ├── playground/               # 应用包 (全部业务代码)
-    │   ├── __init__.py           # 应用工厂
-    │   ├── redis_client.py       # 客户端层: 真实优先, 自动降级 fakeredis
-    │   ├── views.py              # 七大页面路由 (每次操作回显命令)
-    │   ├── templates/            # 页面模板
-    │   └── static/               # 暗色监控台样式
-    ├── tests/                    # 单元测试 (强制 fakeredis, 不依赖服务)
-    ├── requirements.txt
-    └── .gitignore
+├── 02-项目源码/                  # 全部源码
+│   ├── app.py                    # 启动入口: python app.py
+│   ├── playground/               # 应用包 (全部业务代码)
+│   │   ├── __init__.py           # 应用工厂
+│   │   ├── redis_client.py       # 客户端层: 真实优先, 自动降级 fakeredis
+│   │   ├── views.py              # 七大页面路由 (每次操作回显命令)
+│   │   ├── templates/            # 页面模板
+│   │   └── static/               # 暗色监控台样式
+│   ├── tests/                    # 单元测试 (强制 fakeredis, 不依赖服务)
+│   ├── requirements.txt
+│   └── .gitignore
+└── 03-安装包/                    # 交付安装包: 断网也能装
+    ├── python-3.11.9-amd64.exe   # Python 官方安装包 (没 Python 时双击它)
+    └── wheels/                   # 依赖离线包 (双击脚本自动优先使用)
 ```
 
 ## 快速开始
@@ -39,6 +42,10 @@ redis-playground/
 **方式一：双击启动（Windows，推荐）**
 
 双击 `01-【双击开始】.bat`。完整图文说明见 `00-【必读】从这里开始.html`。
+
+电脑没装 Python？双击 `03-安装包\python-3.11.9-amd64.exe` 先装 Python
+（安装时勾选 **Add Python to PATH**），再双击 01。装依赖时脚本会优先用
+`03-安装包\wheels` 离线安装——断网也能装好。
 
 **方式二：命令行**
 

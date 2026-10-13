@@ -78,19 +78,28 @@ rem --- 未检测到 Python ---
 echo.
 echo  [错误] 没有检测到 Python 环境。
 echo.
-echo  请先安装 Python 3.9 或更高版本:
-echo    1. 打开 https://www.python.org/downloads/ 下载
-echo    2. 安装时务必勾选 "Add Python to PATH"  ^<-- 这一步最关键
-echo    3. 安装完成后重新双击本文件
+echo  请先安装 Python, 推荐直接用本文件夹里自带的安装包:
+echo    "03-安装包\python-3.11.9-amd64.exe"  双击安装
+echo    安装时务必勾选 "Add Python to PATH"  ^<-- 这一步最关键
+echo  (也可到 https://www.python.org/downloads/ 下载)
+echo.
+if exist "%~dp003-安装包\python-3.11.9-amd64.exe" (
+    echo  正在帮你打开安装程序, 装完后重新双击本文件即可。
+    start "" "%~dp003-安装包\python-3.11.9-amd64.exe"
+)
 echo.
 pause
 goto :end
 
 rem --- 未安装依赖 ---
 :no_deps
-echo  [2/3] 未检测到项目依赖, 正在自动安装...
+echo  [2/3] 未检测到项目依赖, 正在自动安装(优先离线包)...
 echo.
-"%PY%" -m pip install -r requirements.txt
+if exist "%~dp003-安装包\wheels" (
+    "%PY%" -m pip install -r requirements.txt --no-index --find-links="%~dp003-安装包\wheels"
+) else (
+    "%PY%" -m pip install -r requirements.txt
+)
 if errorlevel 1 goto :install_failed
 echo.
 echo  依赖安装完成, 正在启动服务...
