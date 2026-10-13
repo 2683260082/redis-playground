@@ -38,8 +38,14 @@ class PlaygroundTestCase(unittest.TestCase):
         self.assertEqual(redis_client.get_mode(), "模拟")
 
     def test_all_pages_render(self):
-        for path in ("/", "/string", "/list", "/hash", "/set", "/zset", "/cache"):
+        for path in ("/guide", "/", "/string", "/list", "/hash", "/set", "/zset", "/cache"):
             self.assertEqual(self.client.get(path).status_code, 200, path)
+
+    def test_guide_page_has_interactive_buttons(self):
+        html = self.client.get("/guide").get_data(as_text=True)
+        self.assertIn('id="g-act"', html)      # 交互按钮
+        self.assertIn('id="g-box"', html)      # 内存盒子
+        self.assertIn('id="g-log"', html)      # 命令记录
 
     def test_unknown_page_404(self):
         self.assertEqual(self.client.get("/no-such-page").status_code, 404)

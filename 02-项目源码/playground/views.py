@@ -47,6 +47,12 @@ def index():
     return render_template("index.html", info=info, keys=keys)
 
 
+@bp.route("/guide")
+def guide():
+    """新手上路: 交互式四步教程 (键值/GET/TTL/INCR)"""
+    return render_template("guide.html")
+
+
 @bp.route("/flush", methods=["POST"])
 def flush():
     try:

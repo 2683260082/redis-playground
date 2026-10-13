@@ -6,6 +6,7 @@
 
 ## 特性
 
+- **新手上路 GUIDE 页**：网站内嵌 4 步交互教程（键值 / GET / TTL / INCR），跟着点红按钮 60 秒建立心智模型
 - **七页学习地图**：总览（SCAN 键浏览器）/ STRING / LIST / HASH / SET / ZSET / CACHE
 - **命令回显**：每个操作显示 `命令 → 返回值`，像终端一样对照学习
 - **双模式运行**：自动探测本机 Redis；未安装则降级 `fakeredis`（API 完全一致），界面顶部实时显示模式
@@ -66,10 +67,11 @@ docker run -d -p 6379:6379 redis:7
 
 装好后重新启动本项目，顶部徽章变为「真实模式」。
 
-## 七页学习地图
+## 八页学习地图
 
 | 页面    | 对应类型 | 练什么                                             |
 | ------- | -------- | -------------------------------------------------- |
+| GUIDE   | 入门     | 网站内嵌交互教程：键值/GET/TTL/INCR 四步            |
 | 总览    | —        | `SCAN` 清游标遍历、`DBSIZE`、`FLUSHDB`、TYPE/TTL 查看 |
 | STRING  | 字符串   | `SET/GET/DEL`、`EXPIRE/TTL/PERSIST`、`INCR` 计数器  |
 | LIST    | 列表     | `LPUSH/RPUSH/LPOP/RPOP`、队列 FIFO 直觉            |
@@ -88,7 +90,7 @@ docker run -d -p 6379:6379 redis:7
 python -m unittest discover -s tests -t . -v
 ```
 
-预期结尾：`Ran 12 tests` + `OK`。测试强制使用 fakeredis，不依赖本机 Redis 服务。
+预期结尾：`Ran 13 tests` + `OK`。测试强制使用 fakeredis，不依赖本机 Redis 服务。
 
 ## 配置（环境变量）
 

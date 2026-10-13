@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}新手上路 · Redis 游乐场{% endblock %}
+
+{% block content %}
+<div class="concept">
+  <span class="tag">新手上路</span>
+  不用看文档——<b>跟着点 4 个红色按钮</b>，60 秒建立 Redis 的心智模型：
+  储物柜墙（键→值）、喊名字取东西（GET）、会过期的保质期（TTL）、自动 +1 的计数器（INCR）。
+  右边的盒子和命令记录会同步变化。玩完再去其他实验室页，就都看得懂了。
+</div>
+
+<div class="guide-grid">
+  <section class="panel">
+    <div class="panel-head"><span id="g-tag">第 1 步 / 共 4 步</span></div>
+    <div class="panel-body">
+      <h2 class="guide-title" id="g-title"></h2>
+      <div class="guide-body" id="g-body"></div>
+      <div class="guide-result" id="g-result" style="display:none"></div>
+      <div class="btn-row" style="margin-top:16px">
+        <button class="btn btn-red" id="g-act"></button>
+        <button class="btn" id="g-next" style="display:none">下一步 →</button>
+        <button class="btn" id="g-restart" style="display:none">↺ 再玩一遍</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><span>Redis 内存盒子 · 键 → 值</span></div>
+    <div class="panel-body">
+      <div class="guide-box" id="g-box">
+        <p class="empty">还是空的</p>
+      </div>
+      <div class="guide-lab">命令记录（和真实 Redis 一模一样）</div>
+      <div class="guide-log" id="g-log">你点按钮后，命令会出现在这里</div>
+    </div>
+  </section>
+</div>
+
+<div class="concept" style="margin-top:4px">
+  <span class="tag">练完之后</span>
+  打开顶部 <a href="{{ url_for('views.string_page') }}">STRING 字符串</a> 页，
+  用真实表单把这四步再做一遍——页面顶部的命令回显和这里的命令记录是同一种东西。
+  之后按 LIST → HASH → SET → ZSET → CACHE 的顺序往下玩。
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  var store = {}, visits = 0, step = 0, timer = null;
+  var steps = [
+    {
+      t: "① 它就是一面储物柜墙",
+      b: "每个柜子贴一张<b>名字</b>（叫「键 key」），柜子里放一件<b>东西</b>（叫「值 value」）。下面的红按钮 = 往墙里放一个柜子。",
+      btn: "  点我：放一个柜子 name = 张三",
+      run: function () {
+        store.name = { v: "张三", ttl: null };
+        draw(); log("SET name 张三", "OK");
+        result("成功！右边盒子多了：name → 张三");
+      }
+    },
+    {
+      t: "② 取东西：喊名字就行",
+      b: "想拿柜子里的东西，喊它的名字。这句喊话叫 <b>GET</b>。",
+      btn: "  点我：GET name",
+      run: function () {
+        var v = store.name ? store.name.v : "(空)";
+        log("GET name", v);
+        result("GET 的返回值就是：「" + v + "」");
+      }
+    },
+    {
+      t: "③ 东西会过期（TTL）",
+      b: "很多东西不能一直放着。给柜子定个 <b>10 秒倒计时</b>，到点 Redis 自己删掉，不需要人管。",
+      btn: "⏱ 点我：给 name 设 10 秒寿命",
+      run: function () {
+        if (!store.name) { store.name = { v: "张三", ttl: null }; }
+        store.name.ttl = 10;
+        draw(); log("EXPIRE name 10", "1");
+        result("看右边 name 旁的倒计时，10 秒后它会自己消失");
+        if (timer) clearInterval(timer);
+        timer = setInterval(tick, 1000);
+      }
+    },
+    {
+      t: "④ 计数器自己 +1",
+      b: "统计「被访问几次」，不用拿出来加一再放回去，喊 <b>INCR</b> 它就自己 +1。可多点几次。",
+      btn: "  点我：访问数 +1",
+      run: function () {
+        visits += 1;
+        store["visit:count"] = { v: String(visits), ttl: null };
+        draw(); log("INCR visit:count", String(visits));
+        result("当前访问次数 = " + visits);
+      }
+    }
+  ];
+
+  function $(id) { return document.getElementById(id); }
+
+  function draw() {
+    var keys = Object.keys(store), html = "";
+    if (!keys.length) {
+      $("g-box").innerHTML = '<p class="empty">还是空的</p>';
+      return;
+    }
+    keys.forEach(function (k) {
+      var it = store[k];
+      html += '<div class="guide-row"><span class="k">' + k + "</span>" +
+        "<span>→</span><span class=\"v\">" + it.v + "</span>" +
+        (it.ttl != null
+          ? '<span class="t">' + (it.ttl > 0 ? it.ttl + "s" : "…") + "</span>"
+          : "") + "</div>";
+    });
+    $("g-box").innerHTML = html;
+  }
+
+  function log(cmd, res) {
+    var box = $("g-log");
+    if (!box.querySelector("div")) { box.innerHTML = ""; }
+    var d = document.createElement("div");
+    d.innerHTML = "$ " + cmd + ' <span class="res">→ ' + res + "</span>";
+    box.insertBefore(d, box.firstChild);
+    while (box.children.length > 4) { box.removeChild(box.lastChild); }
+  }
+
+  function result(text) {
+    var el = $("g-result");
+    el.style.display = "block";
+    el.textContent = text;
+  }
+
+  function tick() {
+    if (store.name && store.name.ttl > 0) {
+      store.name.ttl -= 1;
+      if (store.name.ttl <= 0) {
+        delete store.name;
+        draw();
+        log("TTL 到期", "name 被自动删除");
+        result("时间到！name 柜子被 Redis 自动清掉了");
+        clearInterval(timer);
+        timer = null;
+        return;
+      }
+      draw();
+    }
+  }
+
+  function show() {
+    var s = steps[step];
+    $("g-tag").textContent = "第 " + (step + 1) + " 步 / 共 " + steps.length + " 步";
+    $("g-title").innerHTML = s.t;
+    $("g-body").innerHTML = s.b;
+    $("g-result").style.display = "none";
+    $("g-act").style.display = "block";
+    $("g-act").disabled = false;
+    $("g-act").textContent = s.btn;
+    $("g-next").style.display = "none";
+    $("g-restart").style.display = "none";
+  }
+
+  $("g-act").onclick = function () {
+    steps[step].run();
+    if (step !== 3) { this.disabled = true; }
+    $("g-next").style.display = "block";
+  };
+
+  $("g-next").onclick = function () {
+    if (step < steps.length - 1) {
+      step += 1;
+      show();
+    } else {
+      $("g-tag").textContent = "教程完成";
+      $("g-title").innerHTML = " 你已经会 Redis 的全部基础";
+      $("g-body").innerHTML =
+        "<b>就这三件事：</b>存取（SET/GET）、过期（TTL）、自动加（INCR）。" +
+        "<br><br>现在点顶部导航的 <b>STRING</b> 页，用真实表单把这四步做一遍——" +
+        "每页顶部的「概念」块是说明书，每次操作的命令回显在页面最上方。";
+      $("g-act").style.display = "none";
+      $("g-next").style.display = "none";
+      $("g-restart").style.display = "block";
+    }
+  };
+
+  $("g-restart").onclick = function () {
+    store = {}; visits = 0; step = 0;
+    if (timer) { clearInterval(timer); timer = null; }
+    $("g-log").innerHTML = "你点按钮后，命令会出现在这里";
+    draw(); show();
+  };
+
+  draw(); show();
+})();
+</script>
+{% endblock %}

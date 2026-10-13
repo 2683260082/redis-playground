@@ -22,6 +22,7 @@
       </span>
     </div>
     <nav class="tabs" aria-label="实验室导航">
+      <a href="{{ url_for('views.guide') }}"{{ ' class="active"' if request.endpoint == 'views.guide' else '' }}>GUIDE<span class="zh">新手上路</span></a>
       <a href="{{ url_for('views.index') }}"{{ ' class="active"' if request.endpoint == 'views.index' else '' }}>OVERVIEW<span class="zh">总览</span></a>
       <a href="{{ url_for('views.string_page') }}"{{ ' class="active"' if request.endpoint == 'views.string_page' else '' }}>STRING<span class="zh">字符串</span></a>
       <a href="{{ url_for('views.list_page') }}"{{ ' class="active"' if request.endpoint == 'views.list_page' else '' }}>LIST<span class="zh">列表</span></a>

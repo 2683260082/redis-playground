@@ -196,7 +196,8 @@ tr.sub-row td:first-child { padding-left: 26px; }
     </div>
     <table>
       <tr><th>页面</th><th>对应类型</th><th>你会练到</th></tr>
-      <tr><td><span class="name">总览 OVERVIEW</span></td><td>—</td><td>SCAN 游标遍历、键/类型/TTL 一览、FLUSHDB 清库</td></tr>
+      <tr><td><span class="name">GUIDE 新手上路</span></td><td>入门</td><td>★ 网站内嵌交互教程：4 个红按钮，键值/GET/TTL/INCR，60 秒上手</td></tr>
+      <tr><td><span class="name">总览 OVERVIEW</span</td><td>—</td><td>SCAN 游标遍历、键/类型/TTL 一览、FLUSHDB 清库</td></tr>
       <tr><td><span class="name">STRING 字符串</span></td><td><span class="t t-string">string</span></td><td>SET/GET、EXPIRE 倒计时动画、INCR 原子计数器</td></tr>
       <tr><td><span class="name">LIST 列表</span></td><td><span class="t t-list">list</span></td><td>双端进出队列、FIFO 直觉（消息队列原型）</td></tr>
       <tr><td><span class="name">HASH 哈希</span></td><td><span class="t t-hash">hash</span></td><td>对象字段级读写（HSET/HGETALL/HDEL）</td></tr>
@@ -293,6 +294,7 @@ tr.sub-row td:first-child { padding-left: 26px; }
     <h2><span class="num">4</span>推荐学习路线</h2>
     <p class="sub">按顺序玩一遍（约 30 分钟），Redis 的骨架就建立起来了。</p>
     <div class="route">
+      <div class="route-item"><div class="no">0</div><div><b>先打开网站顶部「GUIDE 新手上路」</b><span>4 个红按钮跟着点，60 秒建立「储物柜墙」心智模型——这一步最重要。</span></div></div>
       <div class="route-item"><div class="no">1</div><div><b>总览页认识全局</b><span>看顶部状态卡片（版本/内存/键数），用键浏览器点开任意键。</span></div></div>
       <div class="route-item"><div class="no">2</div><div><b>STRING：写入 + TTL 倒计时</b><span>SET 一个键并设 TTL 60，盯着大数字倒计时到 0，键自动消失。</span></div></div>
       <div class="route-item"><div class="no">3</div><div><b>STRING：INCR 计数器</b><span>连点 INCR 观察原子自增——这就是网站 PV 的实现方式。</span></div></div>
@@ -354,8 +356,8 @@ tr.sub-row td:first-child { padding-left: 26px; }
     <p class="sub">进入 <b>02-项目源码</b> 文件夹打开命令行（地址栏输入 cmd 回车），执行：</p>
 <pre><code>python -m unittest discover -s tests -t . -v</code></pre>
     <div class="tip">
-      <b>预期结果：</b>结尾显示 <b>Ran 12 tests</b> 和 <b>OK</b>。
-      覆盖：七页渲染、SET/GET 往返、INCR 累加、TTL 接口、队列 FIFO、
+      <b>预期结果：</b>结尾显示 <b>Ran 13 tests</b> 和 <b>OK</b>。
+      覆盖：八页渲染（含新手教程交互元素）、SET/GET 往返、INCR 累加、TTL 接口、队列 FIFO、
       集合去重与交集、排行榜降序、缓存 MISS→HIT、清库、404。
     </div>
   </section>
@@ -396,7 +398,7 @@ tr.sub-row td:first-child { padding-left: 26px; }
       <tr><td>双击即可运行</td><td><span class="file-btn">01-【双击开始】.bat</span></td></tr>
       <tr><td>图文说明与概念速查</td><td><span class="file-btn">00-【必读】从这里开始.html</span>（本页）</td></tr>
       <tr><td>核心源码</td><td><span class="name">02-项目源码/playground/</span>（客户端层 + 七页路由）</td></tr>
-      <tr><td>自动化测试</td><td><span class="name">02-项目源码/tests/</span>（12 项，命令见第 6 节）</td></tr>
+      <tr><td>自动化测试</td><td><span class="name">02-项目源码/tests/</span>（13 项，命令见第 6 节）</td></tr>
       <tr><td>双模式设计</td><td>顶部徽章 + <span class="name">redis_client.py</span></td></tr>
       <tr><td>在线源码仓库</td><td><a href="https://github.com/2683260082/redis-playground">github.com/2683260082/redis-playground</a></td></tr>
     </table>
