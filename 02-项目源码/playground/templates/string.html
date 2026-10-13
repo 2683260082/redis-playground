@@ -82,12 +82,13 @@
         </div>
       </div>
       <div class="form-row">
-        <label for="s-val">VALUE</label>
+        <label for="s-val">VALUE（SET 时必填；GET 查询不用填）</label>
         <input type="text" id="s-val" name="value" placeholder="你好, Redis" required>
       </div>
       <div class="btn-row">
         <button class="btn btn-red" type="submit">SET 写入</button>
-        <button class="btn" type="submit" formaction="{{ url_for('views.string_get') }}">GET 查询</button>
+        <button class="btn" type="submit" formaction="{{ url_for('views.string_get') }}"
+                formnovalidate title="查询只需要 KEY，不用填 VALUE">GET 查询</button>
       </div>
     </form>
   </div>
